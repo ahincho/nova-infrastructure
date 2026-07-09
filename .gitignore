@@ -28,3 +28,6 @@ Thumbs.db
 # Test
 .jqwik-database/
 *.hprof
+
+### Node ###
+node_modules/
