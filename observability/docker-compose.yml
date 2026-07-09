@@ -1,0 +1,86 @@
+services:
+  # ─── OpenTelemetry Collector ────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    depends_on:
+      - tempo
+      - loki
+      - mimir
+      - pyroscope
+
+  # ─── Grafana Tempo (Traces) ─────────────────────────────────────────────────
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo/config.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"   # HTTP API
+
+  # ─── Grafana Loki (Logs) ────────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    user: "0"
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+
+  # ─── Grafana Mimir (Metrics) ────────────────────────────────────────────────
+  mimir:
+    image: grafana/mimir:latest
+    container_name: mimir
+    command:
+      - "-config.file=/etc/mimir/config.yaml"
+      - "-target=all"
+    volumes:
+      - ./mimir-config.yaml:/etc/mimir/config.yaml:ro
+      - mimir-data:/tmp/mimir
+    ports:
+      - "9009:9009"   # HTTP API
+
+  # ─── Grafana Pyroscope (Profiles) ───────────────────────────────────────────
+  pyroscope:
+    image: grafana/pyroscope:latest
+    container_name: pyroscope
+    ports:
+      - "4040:4040"   # HTTP API
+
+  # ─── Grafana (Visualización) ────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_INSTALL_PLUGINS=grafana-pyroscope-datasource
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
+      - loki
+      - mimir
+      - pyroscope
+
+volumes:
+  tempo-data:
+  loki-data:
+  mimir-data:
+  grafana-data:
