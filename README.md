@@ -73,3 +73,9 @@ docker compose down -v
 | **Traces** | Grafana Tempo | Almacena trazas distribuidas, recibe vía OTLP |
 | **Logs** | Grafana Loki | Almacena logs estructurados, recibe vía OTLP |
 | **Profiles** | Grafana Pyroscope | Almacena perfiles de rendimiento |
+
+## License
+
+Eclipse Public License 2.0 — see [LICENSE](LICENSE).
+
+Copyright © 2026 Angel Hincho.
